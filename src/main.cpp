@@ -26,6 +26,7 @@ unsigned long prevTime;
 uint8_t voltage;
 int increment;
 const double RATIO = pow(2, 0.083333);
+const double C_ZERO = 16.35;
 
 enum Note  
 {//the ratio between each adjacent semitone is the same every time in equal temperament
@@ -44,42 +45,40 @@ enum Note
   NONE,
 };
 
-Note hash(int freq); 
-int calculateOffset(int freq, Note note);
-void display(Note note, int offset);
+Note hash(double freq); 
+int findOctave(double freq);
+int calculateOffset(double freq, int octave, Note note);
+void display(Note note, int octave, int offset);
 
-void setup() {
+
+void setup() 
+{
   Serial.begin(9600);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  currentTime = millis();
-  if(currentTime - prevTime >= 30UL)
-  {
-    prevTime = currentTime;
-    //send increment to hashmap where if it falls within a certain range, it returns a note
-    Note outputNote = hash(increment);
-    int offset = calculateOffset(increment, outputNote);
-    display(outputNote, offset);
-    //send note to screen
-    increment = 0;
-  }
-  
+void loop() 
+{
   voltage = analogRead(piezoPin);
   if (voltage > 0)
   {
-    increment++;
+    currentTime = millis();
+    double period = currentTime - prevTime;
+    double freq = 1.0/period;
+    prevTime = currentTime;
+
+    //send frequency to hashmap where if it falls within a certain range, it returns a note
+    Note outputNote = hash(freq);
+    int outputNoteOctave = findOctave(freq);
+    int offset = calculateOffset(freq, outputNoteOctave, outputNote);
+    display(outputNote, outputNoteOctave, offset);//send note to screen
   }
+} 
 
-
-}
-
-Note hash(int freq) 
+Note hash(double freq) 
 {
   //calculates closest Note letter to given frequency
-  int freqRatio = round(freq / RATIO);
-  int noteIndex = freqRatio % 12;
+  int octaveNum = findOctave(freq);
+  int noteIndex = log(freq/(16.35*octaveNum + 16.35))/log(RATIO);
 
   switch (noteIndex) {
     case 0:
@@ -111,9 +110,23 @@ Note hash(int freq)
   }
 }
 
-int calculateOffset(int freq, Note note)
+int findOctave(double freq)
 {
-  int correctFreq = A*(note*RATIO);
-   
+  return (int) ((log(freq)/log(2)) - 4.0);
 }
+
+int calculateOffset(double freq, int octave, Note note)
+{
+  int correctFreq = C_ZERO * pow(RATIO, note) * (octave + 1);
+
+  if (correctFreq > freq)
+  {
+    return correctFreq - freq;
+  }
+  else 
+  {
+    return freq - correctFreq;
+  }
+}
+
 

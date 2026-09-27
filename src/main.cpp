@@ -27,6 +27,7 @@ uint8_t voltage;
 int increment;
 const double RATIO = pow(2, 0.083333);
 const double C_ZERO = 16.35;
+const double LOG_TWO = log(2);
 
 enum Note  
 {//the ratio between each adjacent semitone is the same every time in equal temperament
@@ -78,7 +79,7 @@ Note hash(double freq)
 {
   //calculates closest Note letter to given frequency
   int octaveNum = findOctave(freq);
-  int noteIndex = log(freq/(16.35*octaveNum + 16.35))/log(RATIO);
+  int noteIndex = 12*(log(freq)/LOG_TWO - log(C_ZERO)/LOG_TWO - octaveNum);
 
   switch (noteIndex) {
     case 0:

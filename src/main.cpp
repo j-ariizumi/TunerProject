@@ -49,7 +49,7 @@ enum Note
 Note hash(double freq); 
 int findOctave(double freq);
 int calculateOffset(double freq, int octave, Note note);
-void display(Note note, int octave, int offset);
+void display(double freq, Note note, int octave, int offset);
 
 
 void setup() 
@@ -64,14 +64,14 @@ void loop()
   {
     currentTime = millis();
     double period = currentTime - prevTime;
-    double freq = 1.0/period;
+    double freq = 1000.0/period;
     prevTime = currentTime;
 
     //send frequency to hashmap where if it falls within a certain range, it returns a note
     Note outputNote = hash(freq);
     int outputNoteOctave = findOctave(freq);
     int offset = calculateOffset(freq, outputNoteOctave, outputNote);
-    display(outputNote, outputNoteOctave, offset);//send note to screen
+    display(freq, outputNote, outputNoteOctave, offset);//send note to screen
   }
 } 
 
@@ -130,4 +130,12 @@ int calculateOffset(double freq, int octave, Note note)
   }
 }
 
+void display(double freq , Note note, int octave, int offset)
+{
+  Serial.println("Frequency: " + String(freq));
+  Serial.println("Note: " + String(note));
+  Serial.println("Octave: " + String(octave));
+  Serial.println("Offset: " + String(offset));
+  Serial.println();
+}
 
